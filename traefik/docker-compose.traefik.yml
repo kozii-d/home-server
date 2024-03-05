@@ -46,6 +46,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./ssl:/ssl
       - ./dynamic/:/dynamic/:ro
+      - ./logs:/logs
     labels:
       # Enable Traefik for this container
       - "traefik.enable=true"
