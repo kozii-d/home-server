@@ -1,0 +1,58 @@
+version: "3"
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command:
+      # Docker provider configuration
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=proxy_net"
+
+      # File provider configuration
+      - "--providers.file.directory=/dynamic"
+      - "--providers.file.watch=true"
+
+      # Entrypoints configuration
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.minecraft.address=:25565/tcp"
+
+      # Let's Encrypt certificate resolver configuration
+      - "--certificatesResolvers.letsEncrypt.acme.email=${ROOT_EMAIL}"
+      - "--certificatesResolvers.letsEncrypt.acme.storage=/ssl/acme.json"
+      - "--certificatesResolvers.letsEncrypt.acme.httpChallenge.entryPoint=web"
+      - "--certificatesResolvers.letsEncrypt.acme.httpChallenge=true"
+      # Uncomment the next line to use the staging server during testing
+      # - "--certificatesResolvers.letsEncrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--entrypoints.websecure.http.tls.certresolver=letsEncrypt"
+
+      # Enable Traefik dashboard and debug mode
+      - "--api.dashboard=true"
+      - "--api.debug=true"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./ssl:/ssl
+      - ./dynamic/:/dynamic/:ro
+    labels:
+      # Enable Traefik for this container
+      - "traefik.enable=true"
+      # Create middleware for basic auth
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_HASHED_PASSWORD}"
+      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      # Create a router for the Traefik dashboard
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      # Create a service for the Traefik dashboard
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.services.traefik-traefik.loadbalancer.server.port=888"
+    ports:
+      - 80:80
+      - 443:443
+      - 25565:25565/tcp
+    networks:
+      - proxy_net

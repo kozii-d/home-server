@@ -1,0 +1,7 @@
+version: "3"
+
+include:
+  - path: "docker-compose.networks.yml"
+  - path: "traefik/docker-compose.traefik.yml"
+  - path: "portainer/docker-compose.portainer.yml"
+  - path: "minecraft/docker-compose.minecraft.yml"
