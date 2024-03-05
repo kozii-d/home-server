@@ -3,5 +3,6 @@
 .idea
 
 traefik/ssl
+traefik/logs
 portainer/data
 minecraft/data
