@@ -1,7 +1,8 @@
-version: "3"
-
 include:
   - path: "docker-compose.networks.yml"
   - path: "traefik/docker-compose.traefik.yml"
   - path: "portainer/docker-compose.portainer.yml"
+  - path: "pihole/docker-compose.pihole.yml"
   - path: "minecraft/docker-compose.minecraft.yml"
+  - path: "wireguard/docker-compose.wireguard.yml"
+  - path: "homarr/docker-compose.homarr.yml"

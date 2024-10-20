@@ -1,0 +1,36 @@
+services:
+  pihole:
+    image: jacklul/pihole:latest
+    container_name: pihole
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Kyiv"
+      WEBPASSWORD: "${WEBPASSWORD}"
+      WEBTHEME: "default-auto"
+      PIHOLE_DNS_: "1.1.1.1;1.0.0.1"
+      FTLCONF_LOCAL_IPV4: "${PI_LOCAL_IP}"
+      DNSMASQ_LISTENING: "all"
+      PIHOLE_INTERFACE: "eth0"
+    volumes:
+      - "./etc-pihole:/etc/pihole"
+      - "./etc-dnsmasq.d:/etc/dnsmasq.d"
+      - "./pihole-updatelists.conf:/etc/pihole-updatelists.conf"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    dns:
+      - "127.0.0.1"
+      - "1.1.1.1"
+    labels:
+      - "traefik.enable=true"
+
+    # External access
+#      - "traefik.http.routers.pihole-public.rule=Host(`pihole.${DOMAIN}`)"
+#      - "traefik.http.routers.pihole-public.entrypoints=websecure-external"
+    # Internal access
+      - "traefik.http.routers.pihole-local.rule=Host(`pihole.${LOCAL_DOMAIN}`)"
+      - "traefik.http.routers.pihole-local.entrypoints=websecure"
+
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"
+    networks:
+      - proxy_net

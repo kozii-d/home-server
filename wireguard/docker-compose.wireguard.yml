@@ -1,0 +1,67 @@
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wireguard
+    restart: unless-stopped
+    depends_on:
+      - pihole
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Kiev
+      - SERVERURL=wg.${DOMAIN}
+      - SERVERPORT=51820
+      - PEERS=iphone,macbook
+      - INTERNAL_SUBNET=10.13.13.0
+      - ALLOWEDIPS=0.0.0.0/0
+      - PEERDNS=auto
+      - LOG_CONFS=true
+    dns:
+      - 172.20.0.1 # Docker network gateway; forwards DNS requests to host's DNS resolver (e.g., Pi-hole).
+      #You can set up a static IP for the Pi-hole container and use it here instead of the gateway IP.
+    volumes:
+      - ./config:/config
+      - /lib/modules:/lib/modules
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.udp.routers.wireguard.entrypoints=wireguard"
+      - "traefik.udp.routers.wireguard.service=wireguard"
+      - "traefik.udp.services.wireguard.loadbalancer.server.port=51820"
+    networks:
+      - proxy_net
+
+#  wireguard-ui:
+#    image: ngoduykhanh/wireguard-ui:latest
+#    container_name: wireguard-ui
+#    depends_on:
+#      - wireguard
+#    cap_add:
+#      - NET_ADMIN
+#    environment:
+##      - EMAIL_FROM_ADDRESS
+##      - EMAIL_FROM_NAME
+#      - SESSION_SECRET=admin
+#      - WGUI_USERNAME=admin
+#      - WGUI_PASSWORD=admin
+#      - WGUI_DNS=172.20.0.55 #pihole container static IP
+#      - WGUI_MANAGE_START=true
+#      - WGUI_MANAGE_RESTART=true
+#    logging:
+#      driver: json-file
+#      options:
+#        max-size: 50m
+#    volumes:
+#      - ./db:/app/db
+#      - ./config:/etc/wireguard
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.wireguard-ui.rule=Host(`wg.${LOCAL_DOMAIN}`)"
+#      - "traefik.http.routers.wireguard-ui.entrypoints=websecure"
+#      - "traefik.http.services.wireguard-ui.loadbalancer.server.port=5000"
+#    networks:
+#      - proxy_net

@@ -1,9 +1,27 @@
+#Common
 .env
 .DS_STORE
 .idea
 *.log
 
+# Traefik
 traefik/ssl
 traefik/logs
+
+# Portainer
 portainer/data
+
+# Minecraft
 minecraft/data
+
+# Homarr
+homarr/configs
+homarr/data
+
+# Wireguard
+wireguard/config
+
+# Pi-hole
+pihole/etc-pihole
+pihole/etc-dnsmasq.d
+pihole/pihole-updatelists.conf

@@ -1,0 +1,21 @@
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./configs:/app/data/configs
+      - ./icons:/app/public/icons
+      - ./data:/data
+    environment:
+      DEFAULT_COLOR_SCHEME: "dark"
+      TZ: "Europe/Kyiv"
+      DISABLE_ANALYTICS: "true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homarr.rule=Host(`home.${LOCAL_DOMAIN}`)"
+      - "traefik.http.routers.homarr.entrypoints=websecure"
+      - "traefik.http.services.homarr.loadbalancer.server.port=7575"
+    networks:
+      - proxy_net

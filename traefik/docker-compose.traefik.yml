@@ -1,4 +1,3 @@
-version: "3"
 services:
   traefik:
     image: traefik:latest
@@ -6,6 +5,9 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    environment:
+      CF_API_EMAIL: "${CLOUDFLARE_EMAIL}"
+      CF_DNS_API_TOKEN: "${CLOUDFLARE_DNS_API_TOKEN}"
     command:
       # Docker provider configuration
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
@@ -17,19 +19,34 @@ services:
       - "--providers.file.watch=true"
 
       # Entrypoints configuration
+      # Internal
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      # External
+      - "--entrypoints.web-external.address=:81"
+      - "--entrypoints.websecure-external.address=:444"
+      - "--entrypoints.web-external.http.redirections.entrypoint.to=websecure-external"
+      # Minecraft
       - "--entrypoints.minecraft.address=:25565/tcp"
+      # Wireguard
+      - "--entrypoints.wireguard.address=:51820/udp"
 
       # Let's Encrypt certificate resolver configuration
       - "--certificatesResolvers.letsEncrypt.acme.email=${ROOT_EMAIL}"
       - "--certificatesResolvers.letsEncrypt.acme.storage=/ssl/acme.json"
-      - "--certificatesResolvers.letsEncrypt.acme.httpChallenge.entryPoint=web"
-      - "--certificatesResolvers.letsEncrypt.acme.httpChallenge=true"
+      # HTTP Challenge
+#      - "--certificatesResolvers.letsEncrypt.acme.httpChallenge.entryPoint=web"
+#      - "--certificatesResolvers.letsEncrypt.acme.httpChallenge=true"
+      # DNS Challenge
+      - "--certificatesresolvers.letsEncrypt.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsEncrypt.acme.dnschallenge.provider=cloudflare"
       # Uncomment the next line to use the staging server during testing
-      # - "--certificatesResolvers.letsEncrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
-      - "--entrypoints.websecure.http.tls.certresolver=letsEncrypt"
+#      - "--certificatesResolvers.letsEncrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+      # Use let's encrypt for external entrypoint
+      - "--entrypoints.websecure-external.http.tls.certresolver=letsEncrypt"
+      # Use self-signed certificate for internal entrypoint
+      - "--entrypoints.websecure.http.tls=true"
 
       # Enable Traefik dashboard and debug mode
       - "--api.dashboard=true"
@@ -52,15 +69,22 @@ services:
       - "traefik.enable=true"
       # Create middleware for basic auth
       - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_HASHED_PASSWORD}"
-      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-local.middlewares=traefik-auth"
       # Create a router for the Traefik dashboard
-      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      # External access
+#      - "traefik.http.routers.traefik-public.rule=Host(`traefik.${DOMAIN}`)"
+#      - "traefik.http.routers.traefik-public.entrypoints=websecure-external"
+      # Internal access
+      - "traefik.http.routers.traefik-local.rule=Host(`traefik.${LOCAL_DOMAIN}`)"
+      - "traefik.http.routers.traefik-local.entrypoints=websecure"
       # Create a service for the Traefik dashboard
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.services.traefik-traefik.loadbalancer.server.port=888"
+      - "traefik.http.routers.traefik-local.service=api@internal"
     ports:
       - 80:80
       - 443:443
+      - 81:81
+      - 444:444
       - 25565:25565/tcp
+      - 51820:51820/udp
     networks:
       - proxy_net
