@@ -24,29 +24,122 @@ Before you begin, ensure that your system meets the following requirements:
 
 Follow these steps to get started with your Traefik Home Server:
 
+### Clone Repository 
 
-1. **Clone Repository:** Clone this repository to your local machine.
-
-2. **Environment Setup:**
-    - Copy the `.env.example` file and rename it to `.env`. Execute the following command in your terminal:
+### Create .env file
+Copy the `.env.example` file and rename it to `.env`. Execute the following command in your terminal:
       ```
       cp .env.example .env
       ```
-    - Open the `.env` file and enter values for the `DOMAIN` and `ROOT_EMAIL` variables according to your requirements.
 
-3. **Traefik Dashboard Authentication:**
-    - To add authentication to Traefik dashboard, generate a password hash for the user by executing the following command in your terminal:
-      ```
-      echo $(htpasswd -nb "<USER>" "<PASSWORD>") | sed -e s/\\$/\\$\\$/g
-      ```
-    - Copy the username and the generated hash and paste them into the `TRAEFIK_USER` and `TRAEFIK_HASHED_PASSWORD` variables in the `.env` file.
+### Traefik with external services and Let's Encrypt
 
-4. **DNS Configuration:**
-   - Add DNS records for the subdomains that will be used to access the services. For example, if you want to use the subdomain "traefik", add a DNS record for this subdomain. Otherwise, modify the subdomain in the `docker-compose.servicename.yml` file to suit your needs.
+To enable external services and obtain SSL/TLS certificates from Let's Encrypt, you need to perform the following steps:
 
-5. **Utilize Makefile:** Utilize the provided Makefile for streamlined command execution. Run `make help` in your terminal to view a list of available commands along with their descriptions.
+**You need to set the environment variables in the `.env` file:**
+- `EXTERNAL_DOMAIN` - the domain name that will be used to access external services.
+- `ROOT_EMAIL` - the email address that will be used for registering Let's Encrypt certificates.
+
+**Also, to obtain SSL/TLS certificates, you need to choose and configure a challenge**
+
+***DNS Challenge***
+
+If you use Cloudflare as your DNS provider, then I recommend using the DNS challenge to obtain certificates. To do this, you need to set the following environment variables in the `.env` file:
+- `CLOUDFLARE_EMAIL` - the email address used to log into Cloudflare.
+- `CLOUDFLARE_DNS_API_TOKEN` - the API key that can be created on your Cloudflare profile page.
+
+If you use another DNS provider, you can check its support in the [official Traefik documentation](https://doc.traefik.io/traefik/https/acme/#providers).
+
+If your provider is not supported, you will have to use the HTTP challenge.
+
+***HTTP Challenge***
+
+To use the HTTP challenge, you need to uncomment the lines configuring the `HTTP Challenge` in the `traefik/docker-compose.traefik.yml` file and comment out the lines configuring the `DNS Challenge`.
+
+Also, for the HTTP challenge, you need to have port 80 open on your router. More about this below.
+
 
 > **Warning!** To enable staging for Let's Encrypt to avoid hitting rate limits, uncomment the line with the `caServer` setting in the `traefik/docker-compose.traefik.yml` file. When you're ready to obtain real certificates, remember to comment out or remove this line.
+
+### Configure Traefik dashboard
+
+- To add authentication to Traefik dashboard, generate a password hash for the user by executing the following command in your terminal:
+  ```
+  echo $(htpasswd -nb "<USER>" "<PASSWORD>") | sed -e s/\\$/\\$\\$/g
+  ```
+- Copy the username and the generated hash and paste them into the `TRAEFIK_USER` and `TRAEFIK_HASHED_PASSWORD` variables in the `.env` file.
+
+### External and internal services
+
+In this configuration, there is a separation between external and internal services. External services are accessible from the Internet, and internal ones only from the local network.
+
+To separate internal and external services, 4 entry points were created:
+- `web` -  entry point for internal services that are only accessible from the local network. **Port 80.**
+- `websecure` -  entry point for internal services that are only accessible from the local network over HTTPS. **Port 443.**
+- `web-external` - entry point for external services that are accessible from the internet. **Port 81.**
+- `websecure-external` - entry point for external services that are accessible from the internet over HTTPS. **Port 444.**
+
+### Port Forwarding
+
+To enable external services, you need to set up port forwarding on your router. Port forwarding should be configured as follows:
+- Port `81` -> Port `80` of your server
+- Port `444` -> Port `443` of your server
+
+Also, you need to set up port forwarding for external services that will use ports different from HTTP and HTTPS.
+
+For example, WireGuard uses port 51820 and UDP protocol; to make it work, you need to set up port forwarding:
+- Port `51820` -> Port `51820` of your server
+
+Minecraft server uses port 25565 and TCP protocol; to make it work, you need to set up port forwarding:
+- Port `25565` -> Port `25565` of your server
+
+![Port Forwarding](images/portForwarding.png)
+
+## Pi-Hole
+In this configuration, Pi-Hole is used as a local DNS server and ad blocker.
+
+To use Pi-Hole, you need to set up your server as the DNS server on your router.
+1. Log into your router's admin panel.
+2. Go to DHCP Server settings.
+3. Reserve an IP address for your server so it does not change in the future.
+4. Set the IP address of your server as the primary DNS server. Leave the secondary and tertiary DNS servers empty.
+5. Save the settings and reboot the router.
+
+![DHCP Server Config](images/dhcpConfig.png)
+
+Also, it's important to configure local domains in Pi-Hole. To do this, you can use the Pi-Hole admin panel and go to the `Local DNS` tab.
+
+But the most convenient way is to create a wildcard entry for your local domain, so you don't have to add each subdomain manually.
+
+To do this, create a file `02-my-wildcard-dns.conf` in the directory `./pihole/etc-dnsmasq.d/` and add the following entry:
+```
+address=/mydomain.local/192.168.1.95
+```
+Where `mydomain.local` is your local domain, and `192.168.0.95` is the IP address of your server.
+
+## WireGuard
+WireGuard is a fast and modern VPN protocol that provides secure connection to your home server from anywhere in the world.
+
+By connecting to your server via WireGuard, you get access to the local network and internal services from anywhere in the world.
+
+Moreover, on a device connected to WireGuard, there will be no ads even over LTE :)
+
+You can set up peers that will be created initially in the file `./wireguard/docker-compose.wireguard.yml` by changing the environment variables `PEERS`.
+You can also add new peers via the console inside the `wireguard` docker container.
+
+Connection data for WireGuard can be found in the file `./wireguard/config/peer_name`.
+
+Remember to create a DNS record with the subdomain `wg` for your WireGuard server, so you can connect to it by domain name.
+
+> **Warning!** If you use Cloudflare as your DNS provider, DO NOT use Cloudflare DNS Proxy for the subdomain `wg`, as WireGuard does not work through a proxy.
+
+### DNS Configuration
+
+Add DNS records for the subdomains that will be used to access the external services. For example, if you want to use the subdomain "api", add a DNS record for this subdomain on your DNS provider's website. After that, modify the subdomain in the `docker-compose.servicename.yml` file.
+
+### Utilize Makefile
+
+Utilize the provided Makefile for streamlined command execution. Run `make help` in your terminal to view a list of available commands along with their descriptions.
 
 ## Adding Services
 

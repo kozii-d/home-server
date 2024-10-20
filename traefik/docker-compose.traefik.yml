@@ -72,7 +72,7 @@ services:
       - "traefik.http.routers.traefik-local.middlewares=traefik-auth"
       # Create a router for the Traefik dashboard
       # External access
-#      - "traefik.http.routers.traefik-public.rule=Host(`traefik.${DOMAIN}`)"
+#      - "traefik.http.routers.traefik-public.rule=Host(`traefik.${EXTERNAL_DOMAIN}`)"
 #      - "traefik.http.routers.traefik-public.entrypoints=websecure-external"
       # Internal access
       - "traefik.http.routers.traefik-local.rule=Host(`traefik.${LOCAL_DOMAIN}`)"
