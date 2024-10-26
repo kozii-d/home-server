@@ -24,4 +24,3 @@ wireguard/config
 # Pi-hole
 pihole/etc-pihole
 pihole/etc-dnsmasq.d
-pihole/pihole-updatelists.conf

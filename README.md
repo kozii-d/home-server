@@ -113,7 +113,7 @@ But the most convenient way is to create a wildcard entry for your local domain,
 
 To do this, create a file `02-my-wildcard-dns.conf` in the directory `./pihole/etc-dnsmasq.d/` and add the following entry:
 ```
-address=/mydomain.local/192.168.1.95
+address=/mydomain.local/192.168.0.95
 ```
 Where `mydomain.local` is your local domain, and `192.168.0.95` is the IP address of your server.
 
