@@ -1,0 +1,25 @@
+services:
+  hyperhdr:
+    image: nocturno/hyper-hdr:latest
+    container_name: hyperhdr
+    hostname: hyperhdr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Kyiv
+    volumes:
+      - ./config:/config
+    devices:
+      - /dev/video19:/dev/video19
+    ports:
+      - "19400:19400"
+      - "19444:19444"
+      - "19445:19445"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hyperhdr.rule=Host(`hyperhdr.${LOCAL_DOMAIN}`)"
+      - "traefik.http.routers.hyperhdr.entrypoints=websecure"
+      - "traefik.http.services.hyperhdr.loadbalancer.server.port=8090"
+    networks:
+      - proxy_net

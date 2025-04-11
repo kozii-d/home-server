@@ -1,0 +1,6 @@
+include:
+  - path: "jellyfin/docker-compose.jellyfin.yml"
+  - path: "qbittorrent/docker-compose.qbittorrent.yml"
+  - path: "prowlarr/docker-compose.prowlarr.yml"
+  - path: "radarr/docker-compose.radarr.yml"
+  - path: "sonarr/docker-compose.sonarr.yml"

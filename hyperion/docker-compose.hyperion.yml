@@ -1,0 +1,22 @@
+services:
+  hyperion:
+    image: sirfragalot/hyperion.ng:latest
+    container_name: hyperion
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Kyiv
+    volumes:
+      - ./config:/root/.hyperion:rw
+    ports:
+      - "19400:19400"
+      - "19444:19444"
+      - "19445:19445"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hyperion.rule=Host(`hyperion.${LOCAL_DOMAIN}`)"
+      - "traefik.http.routers.hyperion.entrypoints=websecure"
+      - "traefik.http.services.hyperion.loadbalancer.server.port=8090"
+    networks:
+      - proxy_net

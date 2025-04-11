@@ -24,3 +24,17 @@ wireguard/config
 # Pi-hole
 pihole/etc-pihole
 pihole/etc-dnsmasq.d
+
+# Hyperion
+hyperion/config
+
+# HyperHDR
+hyperhdr/config
+
+# Media server
+media-server/data
+media-server/qbittorrent/config
+media-server/jellyfin/config
+media-server/prowlarr/config
+media-server/radarr/config
+media-server/sonarr/config

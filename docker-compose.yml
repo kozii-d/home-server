@@ -6,3 +6,6 @@ include:
   - path: "minecraft/docker-compose.minecraft.yml"
   - path: "wireguard/docker-compose.wireguard.yml"
   - path: "homarr/docker-compose.homarr.yml"
+#  - path: "hyperion/docker-compose.hyperion.yml"
+  - path: "hyperhdr/docker-compose.hyperhdr.yml"
+  - path: "media-server/docker-compose.media-server.yml"
