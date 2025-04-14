@@ -6,14 +6,90 @@ services:
     tty: true
     stdin_open: true
     environment:
+      TZ: "Europe/Kyiv"
       EULA: "TRUE"
-      ONLINE_MODE: "FALSE"
+      ONLINE_MODE: "TRUE"
+      TYPE: "PAPER"
+      PAPER_CHANNEL: "experimental"
+      VERSION: "${MC_VERSION}"
+      MOTD: "${MC_SERVER_NAME}"
+      WHITELIST: "${MC_WHITELIST}"
+      OPS: "${MC_OPS}"
+      MEMORY: "3G"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      RCON_PORT: "${RCON_PORT}"
     volumes:
       - ./data:/data
+      - ./server-icon.png:/data/server-icon.png
+      - ./plugins:/data/plugins
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.minecraft.entrypoints=minecraft"
       - "traefik.tcp.routers.minecraft.rule=HostSNI(`*`)"
       - "traefik.tcp.services.minecraft.loadbalancer.server.port=25565"
+      - "traefik.http.routers.mc-map.rule=Host(`map.${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.mc-map.entrypoints=websecure-external"
+      - "traefik.http.services.mc-map.loadbalancer.server.port=8100"
+    networks:
+      - proxy_net
+  mc-backup-restic:
+    image: itzg/mc-backup
+    container_name: mc-backup-restic
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Kyiv"
+      BACKUP_METHOD: "restic"
+      BACKUP_NAME: "minecraft-world"
+      BACKUP_INTERVAL: "1h"
+      INITIAL_DELAY: "7m"
+      BACKUP_ON_STARTUP: "true"
+      PAUSE_IF_NO_PLAYERS: "true"
+      PLAYERS_ONLINE_CHECK_INTERVAL: "5m"
+      SRC_DIR: "/data"
+      RCON_HOST: "mc"
+      RCON_PORT: "${RCON_PORT}"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      SERVER_HOST: "mc"
+      SERVER_PORT: "25565"
+      # Restic specific variables
+      PRUNE_RESTIC_RETENTION: "--keep-within 7d"
+      RESTIC_PASSWORD: "${RESTIC_PASSWORD}"
+      RESTIC_REPOSITORY: "s3:https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}"
+      AWS_ACCESS_KEY_ID: "${R2_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${R2_SECRET_ACCESS_KEY}"
+      RESTIC_ADDITIONAL_TAGS: "mc_backups"
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      - mc
+    networks:
+      - proxy_net
+  mc-backup-tar:
+    image: itzg/mc-backup
+    container_name: mc-backup-tar
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Kyiv"
+      BACKUP_METHOD: "tar"
+      BACKUP_NAME: "minecraft-world"
+      BACKUP_INTERVAL: "1h"
+      INITIAL_DELAY: "2m"
+      PRUNE_BACKUPS_DAYS: "7"
+      BACKUP_ON_STARTUP: "true"
+      PAUSE_IF_NO_PLAYERS: "true"
+      PLAYERS_ONLINE_CHECK_INTERVAL: "5m"
+      SRC_DIR: "/data"
+      DEST_DIR: "/backups"
+      RCON_HOST: "mc"
+      RCON_PORT: "${RCON_PORT}"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      SERVER_HOST: "mc"
+      SERVER_PORT: "25565"
+    volumes:
+      - ./data:/data:ro
+      - ./backups:/backups
+    depends_on:
+      - mc
     networks:
       - proxy_net

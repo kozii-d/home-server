@@ -13,6 +13,8 @@ portainer/data
 
 # Minecraft
 minecraft/data
+minecraft/backups
+minecraft/plugins
 
 # Homarr
 homarr/configs

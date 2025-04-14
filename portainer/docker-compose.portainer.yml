@@ -13,7 +13,7 @@ services:
       - "traefik.enable=true"
     #  External access
 #      - "traefik.http.routers.portainer-public.entrypoints=websecure-external"
-#      - "traefik.http.routers.portainer-public.rule=Host(`portainer.${DOMAIN}`)"
+#      - "traefik.http.routers.portainer-public.rule=Host(`portainer.${EXTERNAL_DOMAIN}`)"
     # Internal access
       - "traefik.http.routers.portainer-local.entrypoints=websecure"
       - "traefik.http.routers.portainer-local.rule=Host(`portainer.${LOCAL_DOMAIN}`)"
