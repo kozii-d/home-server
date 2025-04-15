@@ -1,0 +1,12 @@
+services:
+  mkcert:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mkcert-generator
+    environment:
+      - LOCAL_DOMAIN=${LOCAL_DOMAIN}
+    volumes:
+      - ./data:/data
+    # Container will exit after certificate creation
+    restart: "no"

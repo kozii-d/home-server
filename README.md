@@ -31,6 +31,52 @@ Copy the `.env.example` file and rename it to `.env`. Execute the following comm
       ```
       cp .env.example .env
       ```
+### Traefik with internal services without "Your connection is not private" warning
+
+To use Traefik with internal (local) services without browser security warnings, you need to set up local trusted certificates. Follow these steps:
+
+#### 1. Set the LOCAL_DOMAIN environment variable in your `.env` file:
+`LOCAL_DOMAIN=your-local-domain.local`
+
+This domain will be used for all your internal services.
+
+#### 2. Generate local certificates by running the following command:
+  ```bash
+    make localCerts
+  ```
+
+This command will:
+
+- Build and run a Docker container that generates trusted SSL certificates for your local domain.
+- Create certificates for both your main domain and wildcard subdomains (*.your-local-domain.local).
+- Save certificates in the `traefik/localCerts` directory.
+- Create a TLS configuration file in `traefik/dynamic/local-tls.yml`.
+- Display instructions for installing the root certificate on your client devices.
+
+#### 3. Install the root certificate on your client devices
+**On macOS:**
+  ```bash
+    # First, copy the certificate from your server (if needed)
+    scp username@server-ip:~/server/traefik/localCerts/rootCA.pem ~/Downloads/
+    
+    # Install the certificate
+    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/Downloads/rootCA.pem
+  ```
+**On Windows:**
+- Copy the `rootCA.pem` file to your Windows machine
+- Rename it to `rootCA.crt` if Windows cannot recognize the file type
+- Double-click the file to open the certificate installer
+- Select "Local Machine" and click "Next"
+- Choose "Place all certificates in the following store"
+- Select "Trusted Root Certification Authorities"
+- Complete the installation
+
+#### 4. Restart your browser to apply the changes.
+
+After completing these steps, you can access your local services using HTTPS (https://service.your-local-domain.local) without any security warnings in your browser.
+
+**Note:** If you add new devices to your network, you'll need to install the root certificate on them as well to avoid security warnings
+
 
 ### Traefik with external services and Let's Encrypt
 

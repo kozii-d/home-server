@@ -7,6 +7,11 @@
 # Traefik
 traefik/ssl
 traefik/logs
+traefik/localCerts
+traefik/dynamic/local-tls.yml
+
+# mkcert
+mkcert/data
 
 # Portainer
 portainer/data

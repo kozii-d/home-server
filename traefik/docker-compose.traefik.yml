@@ -45,6 +45,7 @@ services:
 #      - "--certificatesResolvers.letsEncrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
       # Use let's encrypt for external entrypoint
       - "--entrypoints.websecure-external.http.tls.certresolver=letsEncrypt"
+
       # Use self-signed certificate for internal entrypoint
       - "--entrypoints.websecure.http.tls=true"
 
@@ -62,6 +63,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./ssl:/ssl
+      # If you created local certificates using mkcerts (make localCerts)
+      - ./localCerts:/localCerts
       - ./dynamic/:/dynamic/:ro
       - ./logs:/logs
     labels:
